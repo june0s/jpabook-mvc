@@ -53,4 +53,10 @@ public class MemberService {
         return memberRepository.findOne(memberId);
     }
 
+    @Transactional
+    public void update(Long id, String name) {
+        // 영속 상태 객체 가져와서 수정한다. 그러면 JPA 가 Transaction 끝나면 변경 감지해서 커밋해준다.
+        final Member member = memberRepository.findOne(id);
+        member.setName(name);
+    }
 }

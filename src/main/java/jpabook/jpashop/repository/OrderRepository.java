@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import jpabook.jpashop.domain.Order;
+import jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -88,6 +89,42 @@ public class OrderRepository {
         cq.where(cb.and(criteria.toArray(new Predicate[criteria.size()])));
         final TypedQuery<Order> query = em.createQuery(cq).setMaxResults(1000);
         return query.getResultList();
+    }
+
+    public List<Order> findAllWithMemberDelivery() {
+        // + Fetch join.
+        // Order 에 Member 와 Delivery 를 join 한 다음에 select 절에 다 넣고 한 방에 땡겨오는 것.
+        return em.createQuery(
+                "select o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d", Order.class
+        ).getResultList();
+    }
+
+    public List<Order> findAllWithItem() {
+        // distinct 넣어주면,
+        // 1. SQL 실행시 distinct 넣어준다. 컬럼이 완전히 같아야 중복 제거 됨.
+        // 2. SQL 결과는 뻥튀기 되었지만, JPA 가 id 가 같은 것은 중복 제거 해준다.
+        // 그런데 JPA 가 스마트해져서, distinct 안 넣어도 JPA 가 중복제거 해주는 듯...
+        return em.createQuery(
+            "select distinct o from Order o" +
+                    " join fetch o.member m" +
+                    " join fetch o.delivery d" +
+                    " join fetch o.orderItems oi" +
+                    " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        // + Fetch join.
+        // Order 에 Member 와 Delivery 를 join 한 다음에 select 절에 다 넣고 한 방에 땡겨오는 것.
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
     }
 
     // Query DSL
